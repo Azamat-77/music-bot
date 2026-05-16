@@ -128,15 +128,20 @@ async def find_song(client, message):
 
     except Exception as e:
         print(e)
-        await loading.edit("❌ Xatolik yuz berdi!")
+        await loading.edit("❌ Xatolik yuz berdi!"
 
-# ▶️ RUN
-async def main():
+async def start_bot():
     print("🚀 Bot ishga tushdi...")
 
     await bot.start()
 
+    # bot doim ishlasin
     await asyncio.Event().wait()
 
+def main():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(start_bot())
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
