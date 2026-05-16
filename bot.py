@@ -1,3 +1,4 @@
+import asyncio
 import os
 import yt_dlp
 import asyncio
@@ -130,4 +131,12 @@ async def find_song(client, message):
         await loading.edit("❌ Xatolik yuz berdi!")
 
 # ▶️ RUN
-bot.run()
+async def main():
+    print("🚀 Bot ishga tushdi...")
+
+    await bot.start()
+
+    await asyncio.Event().wait()
+
+if __name__ == "__main__":
+    asyncio.run(main())
