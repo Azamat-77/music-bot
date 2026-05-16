@@ -86,7 +86,5 @@ def music(_, message):
 
 # START BOT (FIXED - NO ASYNC)
 if __name__ == "__main__":
-    bot.start()
-    print("🚀 Bot ishga tushdi")
-    idle()
-    bot.stop()
+    print("Bot started")
+    bot.run()
