@@ -110,11 +110,16 @@ async def music(_, message):
         await msg.edit("❌ Xatolik!")
 
 # 🚀 START BOT (CLEAN ENTRY POINT)
-async def main():
-    await bot.start()
-    print("🚀 Bot ishga tushdi...")
-    await idle()
-    await bot.stop()
+from pyrogram.idle import idle
+
+def run_bot():
+    async def main():
+        await bot.start()
+        print("🚀 Bot ishga tushdi")
+        await idle()
+        await bot.stop()
+
+    bot.run(main)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    run_bot()
