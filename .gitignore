@@ -1,0 +1,7 @@
+music_bot.session
+__pycache__/
+*.pyc
+downloads/
+music.db
+users.txt
+.env
