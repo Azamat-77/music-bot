@@ -1,10 +1,9 @@
 import os
 import sqlite3
 import yt_dlp
-from pyrogram import Client, filters
-from pyrogram.idle import idle
+from pyrogram import Client, filters, idle
 
-# 🔧 CONFIG
+# 🔧 CONFIG (buni keyin Render ENV ga chiqarib qo‘ygan yaxshi)
 API_ID = 38920950
 API_HASH = "1b2b3131134f901228acd5fa464c5eb5"
 BOT_TOKEN = "8331117123:AAE8BPC9yOrg8U839uVxC6Bf5BxXaL9o300"
@@ -30,25 +29,25 @@ CREATE TABLE IF NOT EXISTS songs (
 """)
 db.commit()
 
-# START
+# START COMMAND
 @bot.on_message(filters.command("start"))
-async def start(_, message):
-    await message.reply("🎵 Qo‘shiq nomini yoz!")
+def start(_, message):
+    message.reply("🎵 Qo‘shiq nomini yoz!")
 
-# MUSIC
+# MUSIC HANDLER
 @bot.on_message(filters.text & ~filters.regex("^/"))
-async def music(_, message):
+def music(_, message):
 
     q = message.text.lower().strip()
-    msg = await message.reply("⏳ Qidirilyapti...")
+    msg = message.reply("⏳ Qidirilyapti...")
 
-    # CACHE
+    # CACHE CHECK
     cur.execute("SELECT file_id FROM songs WHERE name=?", (q,))
     data = cur.fetchone()
 
     if data:
-        await message.reply_audio(data[0])
-        await msg.delete()
+        message.reply_audio(data[0])
+        msg.delete()
         return
 
     ydl_opts = {
@@ -62,13 +61,13 @@ async def music(_, message):
             info = ydl.extract_info(f"ytsearch1:{q}", download=True)
 
             if not info.get("entries"):
-                await msg.edit("❌ Topilmadi!")
+                msg.edit("❌ Topilmadi!")
                 return
 
             video = info["entries"][0]
             file_path = ydl.prepare_filename(video)
 
-        sent = await message.reply_audio(file_path, caption=video["title"])
+        sent = message.reply_audio(file_path, caption=video["title"])
 
         try:
             cur.execute(
@@ -79,18 +78,15 @@ async def music(_, message):
         except:
             pass
 
-        await msg.delete()
+        msg.delete()
 
     except Exception as e:
         print(e)
-        await msg.edit("❌ Xatolik!")
+        msg.edit("❌ Xatolik!")
 
-# RUN (FINAL FIX)
-async def main():
-    await bot.start()
-    print("🚀 Bot ishga tushdi")
-    await idle()
-    await bot.stop()
-
+# START BOT (FIXED - NO ASYNC)
 if __name__ == "__main__":
-    bot.run(main)
+    bot.start()
+    print("🚀 Bot ishga tushdi")
+    idle()
+    bot.stop()
