@@ -5,19 +5,16 @@ import yt_dlp
 
 from pyrogram import Client, filters
 from pyrogram.enums import ChatAction
-from pyrogram.types import (
-    ReplyKeyboardMarkup,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton
-)
+from pyrogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
 # ================= SETTINGS =================
 
 ADMIN_ID = 7562363422
 
-BOT_TOKEN = "8331117123:AAE8BPC9yOrg8U839uVxC6Bf5BxXaL9o300"
-API_ID = 38920950
-API_HASH = "1b2b3131134f901228acd5fa464c5eb5"
+# 🔥 SAFE MODE (Render + Termux uchun)
+BOT_TOKEN = os.getenv("8331117123:AAEcjafwjnFBur7UnWUhJoqpPsbZhierWBg")
+API_ID = int(os.getenv("33081106", 0))
+API_HASH = os.getenv("08b98d67703a93682f4581c2c288d9b4")
 
 START_PHOTO = "https://i.ibb.co/tpjt60kq/IMG-20260328-11432.jpg"
 
@@ -42,11 +39,7 @@ open(USER_FILE, "a").close()
 
 # ================= DATABASE =================
 
-db = sqlite3.connect(
-    "music.db",
-    check_same_thread=False
-)
-
+db = sqlite3.connect("music.db", check_same_thread=False)
 cur = db.cursor()
 
 cur.execute("""
@@ -55,7 +48,6 @@ CREATE TABLE IF NOT EXISTS songs (
     file_id TEXT
 )
 """)
-
 db.commit()
 
 # ================= KEYBOARD =================
@@ -80,32 +72,18 @@ async def start(client, message):
     admin_buttons = None
 
     if message.from_user.id == ADMIN_ID:
-
         admin_buttons = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "👥 Obunachilar",
-                    callback_data="subs"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    "📢 Reklama",
-                    callback_data="broadcast"
-                )
-            ]
+            [InlineKeyboardButton("👥 Obunachilar", callback_data="subs")],
+            [InlineKeyboardButton("📢 Reklama", callback_data="broadcast")]
         ])
 
     await message.reply_photo(
         photo=START_PHOTO,
-        caption=(
-            "🎵 MUSIC BOT\n\n"
-            "🎶 Qo‘shiq nomini yuboring"
-        ),
+        caption="🎵 MUSIC BOT\n\n🎶 Qo‘shiq nomini yuboring",
         reply_markup=keyboard if admin_buttons is None else admin_buttons
     )
 
-# ================= SEARCH FUNCTION =================
+# ================= SEARCH =================
 
 def search_music(query):
 
@@ -118,62 +96,42 @@ def search_music(query):
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-        info = ydl.extract_info(
-            f"ytsearch5:{query}",
-            download=False
-        )
+        info = ydl.extract_info(f"ytsearch5:{query}", download=False)
 
         entries = info.get("entries", [])
 
         if not entries:
             return None, None
 
-        bad_words = [
-            "slowed",
-            "remix",
-            "bass boosted",
-            "reverb",
-            "short",
-            "status"
-        ]
+        bad_words = ["slowed", "remix", "bass boosted", "reverb", "short", "status"]
 
         best = None
 
         for v in entries:
-
             title = v.get("title", "").lower()
-
             if any(b in title for b in bad_words):
                 continue
-
             best = v
             break
 
         if not best:
             best = entries[0]
 
-        info2 = ydl.extract_info(
-            best["url"],
-            download=True
-        )
+        info2 = ydl.extract_info(best["url"], download=True)
 
         path = ydl.prepare_filename(info2)
 
         base, _ = os.path.splitext(path)
 
         final_path = None
-
         for ext in [".mp3", ".m4a", ".webm", ".opus"]:
             if os.path.exists(base + ext):
                 final_path = base + ext
                 break
 
-        if not final_path:
-            final_path = path
-
         return best["title"], final_path
 
-# ================= MUSIC SEARCH =================
+# ================= MUSIC =================
 
 @bot.on_message(filters.text & ~filters.command("start"))
 async def music(client, message):
@@ -181,85 +139,41 @@ async def music(client, message):
     text = message.text.strip()
 
     if text == "🎵 Qo‘shiq qidirish":
-        await message.reply(
-            "🎶 Qo‘shiq nomini yuboring"
-        )
-        return
+        return await message.reply("🎶 Qo‘shiq nomini yuboring")
 
     query = text.lower()
 
-    await client.send_chat_action(
-        message.chat.id,
-        ChatAction.UPLOAD_AUDIO
-    )
+    await client.send_chat_action(message.chat.id, ChatAction.UPLOAD_AUDIO)
 
-    loading = await message.reply(
-        "⏳ Qidirilmoqda..."
-    )
+    loading = await message.reply("⏳ Qidirilmoqda...")
 
-    # ===== CACHE =====
-
-    cur.execute(
-        "SELECT file_id FROM songs WHERE query=?",
-        (query,)
-    )
-
+    cur.execute("SELECT file_id FROM songs WHERE query=?", (query,))
     data = cur.fetchone()
 
     if data:
-
         await message.reply_audio(data[0])
-
         await loading.delete()
-
         return
 
-    # ===== DOWNLOAD =====
-
     try:
-
-        title, file_path = await asyncio.to_thread(
-            search_music,
-            query
-        )
+        title, file_path = await asyncio.to_thread(search_music, query)
 
         if not file_path:
+            return await loading.edit("❌ Topilmadi")
 
-            await loading.edit(
-                "❌ Topilmadi"
-            )
+        sent = await message.reply_audio(file_path, caption=f"🎵 {title}")
 
-            return
-
-        sent = await message.reply_audio(
-            audio=file_path,
-            caption=f"🎵 {title}"
+        cur.execute(
+            "INSERT OR REPLACE INTO songs VALUES (?, ?)",
+            (query, sent.audio.file_id)
         )
-
-        try:
-
-            cur.execute(
-                "INSERT OR REPLACE INTO songs VALUES (?, ?)",
-                (
-                    query,
-                    sent.audio.file_id
-                )
-            )
-
-            db.commit()
-
-        except:
-            pass
+        db.commit()
 
         await loading.delete()
 
     except Exception as e:
-
         print(e)
-
-        await loading.edit(
-            "❌ Xatolik yuz berdi"
-        )
+        await loading.edit("❌ Xatolik yuz berdi")
 
 # ================= ADMIN =================
 
@@ -272,10 +186,7 @@ async def subs(client, callback_query):
     with open(USER_FILE, "r") as f:
         users = set(f.read().splitlines())
 
-    await callback_query.answer(
-        f"👥 Obunachilar: {len(users)}",
-        show_alert=True
-    )
+    await callback_query.answer(f"👥 Obunachilar: {len(users)}", show_alert=True)
 
 @bot.on_callback_query(filters.regex("broadcast"))
 async def broadcast(client, callback_query):
@@ -287,19 +198,12 @@ async def broadcast(client, callback_query):
         users = set(f.read().splitlines())
 
     for user in users:
-
         try:
-            await client.send_message(
-                int(user),
-                "📢 Admin xabari!"
-            )
+            await client.send_message(int(user), "📢 Admin xabari!")
         except:
             pass
 
-    await callback_query.answer(
-        "✅ Yuborildi",
-        show_alert=True
-    )
+    await callback_query.answer("✅ Yuborildi", show_alert=True)
 
 # ================= RUN =================
 
