@@ -11,10 +11,9 @@ from pyrogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyb
 
 ADMIN_ID = 7562363422
 
-# 🔥 SAFE MODE (Render + Termux uchun)
-BOT_TOKEN = os.getenv("8331117123:AAEcjafwjnFBur7UnWUhJoqpPsbZhierWBg")
-API_ID = int(os.getenv("33081106", 0))
-API_HASH = os.getenv("08b98d67703a93682f4581c2c288d9b4")
+BOT_TOKEN = "8331117123:AAEcjafwjnFBur7UnWUhJoqpPsbZhierWBg"
+API_ID = 33081106
+API_HASH = "08b98d67703a93682f4581c2c288d9b4"
 
 START_PHOTO = "https://i.ibb.co/tpjt60kq/IMG-20260328-11432.jpg"
 
